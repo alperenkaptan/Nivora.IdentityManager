@@ -19,6 +19,7 @@ public class UsersModel : PageModel
     }
 
     public List<IdentityUserRow> Users { get; set; } = [];
+    public Dictionary<Guid, List<string>> UserRoles { get; set; } = [];
     public bool IsForbidden { get; set; }
 
     [TempData]
@@ -45,6 +46,12 @@ public class UsersModel : PageModel
             .FromSqlRaw(
                 "SELECT Id, Email, NormalizedEmail, IsDisabled, AccessFailedCount, LockoutEnd, CreatedAt, LastLoginAt, EmailConfirmedAt, PhoneNumber, PhoneConfirmedAt, TwoFactorEnabled FROM Users ORDER BY CreatedAt DESC")
             .ToListAsync();
+
+        // Her user için roles'? fetch et
+        foreach (var user in Users)
+        {
+            UserRoles[user.Id] = (await _admin.GetUserRolesAsync(user.Id)).ToList();
+        }
 
         return Page();
     }

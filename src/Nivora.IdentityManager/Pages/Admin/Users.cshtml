@@ -21,6 +21,7 @@ else
         <thead>
             <tr>
                 <th>Email</th>
+                <th>Roles</th>
                 <th>Disabled</th>
                 <th>Failed</th>
                 <th>Lockout</th>
@@ -36,6 +37,16 @@ else
             {
                 <tr>
                     <td>@user.Email</td>
+                    <td>
+                        @if (Model.UserRoles.TryGetValue(user.Id, out var roles) && roles.Count > 0)
+                        {
+                            <span class="badge bg-primary">@string.Join(", ", roles)</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">—</span>
+                        }
+                    </td>
                     <td>@user.IsDisabled</td>
                     <td>@user.AccessFailedCount</td>
                     <td>@user.LockoutEnd</td>
