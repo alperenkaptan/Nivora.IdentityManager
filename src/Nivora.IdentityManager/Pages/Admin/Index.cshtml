@@ -6,15 +6,8 @@
 
 <h2>Admin Panel</h2>
 
-@if (Model.IsForbidden)
-{
-    <div class="alert alert-danger">Forbidden — admin access only.</div>
-}
-else
-{
-    <ul>
-        <li><a asp-page="/Admin/Users">Manage Users</a></li>
-        <li><a asp-page="/Admin/Roles">Manage Roles</a></li>
-        <li><a asp-page="/Admin/Tokens">Generate Admin Tokens</a></li>
-    </ul>
-}
+<ul class="list-group" style="width: 300px;">
+    <li class="list-group-item"><a asp-page="/Admin/Users">Manage Users</a></li>
+    <li class="list-group-item"><a asp-page="/Admin/Roles">Manage Roles</a></li>
+    <li class="list-group-item"><a asp-page="/Admin/Tokens">Generate Admin Tokens</a></li>
+</ul>

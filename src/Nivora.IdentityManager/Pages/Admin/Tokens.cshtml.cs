@@ -1,10 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Nivora.Identity.Abstractions;
-using Nivora.IdentityManager.Helpers;
 
 namespace Nivora.IdentityManager.Pages.Admin;
 
+[Authorize(Roles = "Admin")]
 public class TokensModel : PageModel
 {
     private readonly IIdentityAdminService _admin;
@@ -14,36 +15,16 @@ public class TokensModel : PageModel
         _admin = admin;
     }
 
-    public bool IsForbidden { get; set; }
-
     [TempData]
     public string? StatusMessage { get; set; }
 
     [TempData]
     public string? GeneratedToken { get; set; }
 
-    private async Task<bool> IsAdminAsync()
-    {
-        var userId = AuthSessionStore.GetUserId(HttpContext.Session);
-        if (userId is null) return false;
-        var roles = await _admin.GetUserRolesAsync(userId.Value);
-        return roles.Contains("Admin", StringComparer.OrdinalIgnoreCase);
-    }
-
-    public async Task<IActionResult> OnGetAsync()
-    {
-        if (!await IsAdminAsync())
-        {
-            IsForbidden = true;
-            Response.StatusCode = 403;
-        }
-        return Page();
-    }
+    public void OnGet() { }
 
     public async Task<IActionResult> OnPostPasswordResetAsync(string email)
     {
-        if (!await IsAdminAsync()) return Forbid();
-
         var token = await _admin.CreatePasswordResetTokenAsync(email);
         if (token is not null)
         {
@@ -59,8 +40,6 @@ public class TokensModel : PageModel
 
     public async Task<IActionResult> OnPostEmailConfirmationAsync(string email)
     {
-        if (!await IsAdminAsync()) return Forbid();
-
         var token = await _admin.CreateEmailConfirmationTokenAsync(email);
         if (token is not null)
         {
@@ -76,8 +55,6 @@ public class TokensModel : PageModel
 
     public async Task<IActionResult> OnPostPhoneVerificationAsync(Guid userId)
     {
-        if (!await IsAdminAsync()) return Forbid();
-
         var code = await _admin.CreatePhoneVerificationCodeAsync(userId);
         if (code is not null)
         {

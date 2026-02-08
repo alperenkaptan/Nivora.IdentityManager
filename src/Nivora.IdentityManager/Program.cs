@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Nivora.Identity.Abstractions;
 using Nivora.IdentityManager.Data;
@@ -8,7 +9,14 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<AppDbContext>(o =>
     o.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
+// Set JWT Bearer as default authentication scheme for [Authorize] attributes
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+});
+
 // Nivora Identity (facade + admin service registered automatically)
+// This registers JWT Bearer authentication
 builder.Services.AddNivoraIdentity<AppDbContext>(
     builder.Configuration.GetSection("NivoraIdentity"));
 
@@ -64,4 +72,3 @@ static async Task SeedAdminAsync(WebApplication app)
     await admin.AssignRoleAsync(user.Id, "Admin");
     app.Logger.LogInformation("Admin user {Email} seeded with Admin role.", email);
 }
-
