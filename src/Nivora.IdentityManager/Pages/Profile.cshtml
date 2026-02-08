@@ -1,0 +1,30 @@
+@page
+@model Nivora.IdentityManager.Pages.ProfileModel
+@{
+    ViewData["Title"] = "Profile";
+}
+
+<h2>Profile</h2>
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger">@Model.ErrorMessage</div>
+}
+
+@if (Model.Me is not null)
+{
+    <table class="table table-bordered col-md-6">
+        <tr><th>ID</th><td>@Model.Me.Id</td></tr>
+        <tr><th>Email</th><td>@Model.Me.Email</td></tr>
+        <tr><th>Created At</th><td>@Model.Me.CreatedAt</td></tr>
+        <tr><th>Last Login At</th><td>@Model.Me.LastLoginAt</td></tr>
+    </table>
+
+    <form method="post" asp-page-handler="Logout">
+        <button type="submit" class="btn btn-outline-danger">Logout</button>
+    </form>
+}
+else
+{
+    <p>You are not logged in. <a asp-page="/Login">Login</a></p>
+}

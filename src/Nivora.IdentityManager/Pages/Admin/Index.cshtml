@@ -1,0 +1,18 @@
+@page
+@model Nivora.IdentityManager.Pages.Admin.IndexModel
+@{
+    ViewData["Title"] = "Admin";
+}
+
+<h2>Admin Panel</h2>
+
+@if (Model.IsForbidden)
+{
+    <div class="alert alert-danger">Forbidden — admin access only.</div>
+}
+else
+{
+    <ul>
+        <li><a asp-page="/Admin/Users">Manage Users</a></li>
+    </ul>
+}

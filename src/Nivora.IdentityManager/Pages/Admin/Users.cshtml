@@ -1,0 +1,66 @@
+@page
+@model Nivora.IdentityManager.Pages.Admin.UsersModel
+@{
+    ViewData["Title"] = "Manage Users";
+}
+
+<h2>Users</h2>
+
+@if (Model.IsForbidden)
+{
+    <div class="alert alert-danger">Forbidden — admin access only.</div>
+}
+else
+{
+    @if (!string.IsNullOrEmpty(Model.StatusMessage))
+    {
+        <div class="alert alert-info">@Model.StatusMessage</div>
+    }
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Email</th>
+                <th>Disabled</th>
+                <th>Failed Logins</th>
+                <th>Lockout End</th>
+                <th>Created At</th>
+                <th>Last Login At</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in Model.Users)
+            {
+                <tr>
+                    <td>@user.Email</td>
+                    <td>@user.IsDisabled</td>
+                    <td>@user.AccessFailedCount</td>
+                    <td>@user.LockoutEnd</td>
+                    <td>@user.CreatedAt</td>
+                    <td>@user.LastLoginAt</td>
+                    <td>
+                        @if (user.IsDisabled)
+                        {
+                            <form method="post" asp-page-handler="Enable" style="display:inline">
+                                <input type="hidden" name="userId" value="@user.Id" />
+                                <button type="submit" class="btn btn-sm btn-success">Enable</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <form method="post" asp-page-handler="Disable" style="display:inline">
+                                <input type="hidden" name="userId" value="@user.Id" />
+                                <button type="submit" class="btn btn-sm btn-warning">Disable</button>
+                            </form>
+                        }
+                        <form method="post" asp-page-handler="Revoke" style="display:inline">
+                            <input type="hidden" name="userId" value="@user.Id" />
+                            <button type="submit" class="btn btn-sm btn-danger">Revoke Sessions</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
