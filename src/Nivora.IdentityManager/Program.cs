@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Nivora.Identity.Abstractions;
 using Nivora.IdentityManager.Data;
+using Nivora.IdentityManager.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,6 +40,11 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseRouting();
 app.UseSession();
+
+// Add JWT from session to Authorization header
+// This must be BEFORE UseAuthentication()
+app.UseMiddleware<JwtFromSessionMiddleware>();
+
 app.UseAuthentication();
 app.UseAuthorization();
 

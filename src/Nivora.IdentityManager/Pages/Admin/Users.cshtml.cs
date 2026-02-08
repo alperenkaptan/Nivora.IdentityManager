@@ -44,7 +44,9 @@ public class UsersModel : PageModel
     public async Task<IActionResult> OnPostDisableAsync(Guid userId)
     {
         await _admin.DisableUserAsync(userId, "admin panel");
-        StatusMessage = "User disabled.";
+        // Disable edilen user'?n sessionlar?n? revoke et
+        await _admin.RevokeAllSessionsAsync(userId, "user disabled");
+        StatusMessage = "User disabled and sessions revoked.";
         return RedirectToPage();
     }
 
@@ -66,21 +68,29 @@ public class UsersModel : PageModel
     public async Task<IActionResult> OnPostSetPasswordAsync(Guid userId, string newPassword)
     {
         await _admin.SetPasswordAsync(userId, newPassword, "admin panel");
-        StatusMessage = "Password updated.";
+        // Password de?i?ti?inde user'?n tüm sessionlar?n? revoke et
+        await _admin.RevokeAllSessionsAsync(userId, "password changed by admin");
+        StatusMessage = "Password updated and sessions revoked.";
         return RedirectToPage();
     }
 
     public async Task<IActionResult> OnPostAssignRoleAsync(Guid userId, string roleName)
     {
         await _admin.AssignRoleAsync(userId, roleName);
-        StatusMessage = $"Role '{roleName}' assigned.";
+        // Role de?i?ti?inde user'?n tüm sessionlar?n? revoke et
+        // böylece yeni token almas? gerekir ve yeni role'ler reflection edilir
+        await _admin.RevokeAllSessionsAsync(userId, $"role '{roleName}' assigned");
+        StatusMessage = $"Role '{roleName}' assigned and user sessions revoked (must re-login for role to take effect).";
         return RedirectToPage();
     }
 
     public async Task<IActionResult> OnPostRemoveRoleAsync(Guid userId, string roleName)
     {
         await _admin.RemoveRoleAsync(userId, roleName);
-        StatusMessage = $"Role '{roleName}' removed.";
+        // Role kald?r?ld???nda user'?n tüm sessionlar?n? revoke et
+        // böylece yeni token almas? gerekir ve role de?i?ikli?i reflect edilir
+        await _admin.RevokeAllSessionsAsync(userId, $"role '{roleName}' removed");
+        StatusMessage = $"Role '{roleName}' removed and user sessions revoked (must re-login).";
         return RedirectToPage();
     }
 }
