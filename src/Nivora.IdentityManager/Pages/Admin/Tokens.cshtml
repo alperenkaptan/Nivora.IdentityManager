@@ -1,0 +1,59 @@
+@page
+@model Nivora.IdentityManager.Pages.Admin.TokensModel
+@{
+    ViewData["Title"] = "Admin Tokens";
+}
+
+<h2>Generate Admin Tokens</h2>
+
+@if (Model.IsForbidden)
+{
+    <div class="alert alert-danger">Forbidden — admin access only.</div>
+}
+else
+{
+    @if (!string.IsNullOrEmpty(Model.StatusMessage))
+    {
+        <div class="alert alert-info">@Model.StatusMessage</div>
+    }
+    @if (!string.IsNullOrEmpty(Model.GeneratedToken))
+    {
+        <div class="alert alert-warning">
+            <strong>Generated Token / Code:</strong>
+            <code style="word-break:break-all;">@Model.GeneratedToken</code>
+        </div>
+    }
+
+    <hr />
+
+    <h4>Password Reset Token</h4>
+    <form method="post" asp-page-handler="PasswordReset" class="col-md-4 mb-4">
+        <div class="mb-2">
+            <label class="form-label">User Email</label>
+            <input type="email" name="email" class="form-control" required />
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">Generate Password Reset Token</button>
+    </form>
+
+    <hr />
+
+    <h4>Email Confirmation Token</h4>
+    <form method="post" asp-page-handler="EmailConfirmation" class="col-md-4 mb-4">
+        <div class="mb-2">
+            <label class="form-label">User Email</label>
+            <input type="email" name="email" class="form-control" required />
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">Generate Email Confirmation Token</button>
+    </form>
+
+    <hr />
+
+    <h4>Phone Verification Code</h4>
+    <form method="post" asp-page-handler="PhoneVerification" class="col-md-4 mb-4">
+        <div class="mb-2">
+            <label class="form-label">User ID (GUID)</label>
+            <input type="text" name="userId" class="form-control" required />
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">Generate Phone Verification Code</button>
+    </form>
+}

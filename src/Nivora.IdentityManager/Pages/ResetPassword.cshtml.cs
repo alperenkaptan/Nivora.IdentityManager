@@ -2,15 +2,14 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Nivora.Identity.Abstractions;
 using Nivora.Identity.Contracts.Dtos;
-using Nivora.IdentityManager.Helpers;
 
 namespace Nivora.IdentityManager.Pages;
 
-public class RegisterModel : PageModel
+public class ResetPasswordModel : PageModel
 {
     private readonly INivoraIdentityFacade _facade;
 
-    public RegisterModel(INivoraIdentityFacade facade)
+    public ResetPasswordModel(INivoraIdentityFacade facade)
     {
         _facade = facade;
     }
@@ -18,16 +17,22 @@ public class RegisterModel : PageModel
     [TempData]
     public string? ErrorMessage { get; set; }
 
+    [TempData]
+    public string? StatusMessage { get; set; }
+
+    [BindProperty(SupportsGet = true)]
+    public string? Token { get; set; }
+
     public void OnGet() { }
 
-    public async Task<IActionResult> OnPostAsync(string email, string password)
+    public async Task<IActionResult> OnPostAsync(string token, string newPassword)
     {
         try
         {
             var ctx = IdentityCallContext.FromHttp(HttpContext);
-            var response = await _facade.RegisterAsync(new RegisterRequest(email, password), ctx);
-            AuthSessionStore.SetTokens(HttpContext.Session, response.AccessToken, response.RefreshToken);
-            return RedirectToPage("/Profile");
+            await _facade.ResetPasswordAsync(new ResetPasswordRequest(token, newPassword), ctx);
+            StatusMessage = "Password has been reset. You can now log in.";
+            return RedirectToPage("/Login");
         }
         catch (IdentityOperationException ex)
         {

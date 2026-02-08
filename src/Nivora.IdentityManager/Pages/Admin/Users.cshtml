@@ -17,15 +17,17 @@ else
         <div class="alert alert-info">@Model.StatusMessage</div>
     }
 
-    <table class="table table-striped">
+    <table class="table table-striped table-sm">
         <thead>
             <tr>
                 <th>Email</th>
                 <th>Disabled</th>
-                <th>Failed Logins</th>
-                <th>Lockout End</th>
-                <th>Created At</th>
-                <th>Last Login At</th>
+                <th>Failed</th>
+                <th>Lockout</th>
+                <th>Email Confirmed</th>
+                <th>Phone</th>
+                <th>2FA</th>
+                <th>Created</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -37,8 +39,10 @@ else
                     <td>@user.IsDisabled</td>
                     <td>@user.AccessFailedCount</td>
                     <td>@user.LockoutEnd</td>
-                    <td>@user.CreatedAt</td>
-                    <td>@user.LastLoginAt</td>
+                    <td>@(user.EmailConfirmedAt?.ToString("g") ?? "—")</td>
+                    <td>@(user.PhoneNumber ?? "—") @(user.PhoneConfirmedAt.HasValue ? "?" : "")</td>
+                    <td>@(user.TwoFactorEnabled ? "?" : "—")</td>
+                    <td>@user.CreatedAt.ToString("g")</td>
                     <td>
                         @if (user.IsDisabled)
                         {
@@ -56,7 +60,22 @@ else
                         }
                         <form method="post" asp-page-handler="Revoke" style="display:inline">
                             <input type="hidden" name="userId" value="@user.Id" />
-                            <button type="submit" class="btn btn-sm btn-danger">Revoke Sessions</button>
+                            <button type="submit" class="btn btn-sm btn-danger">Revoke</button>
+                        </form>
+                        <form method="post" asp-page-handler="SetPassword" style="display:inline" class="d-inline-flex align-items-center gap-1">
+                            <input type="hidden" name="userId" value="@user.Id" />
+                            <input type="password" name="newPassword" class="form-control form-control-sm" style="width:120px" placeholder="new pwd" required />
+                            <button type="submit" class="btn btn-sm btn-outline-primary">Set</button>
+                        </form>
+                        <form method="post" asp-page-handler="AssignRole" style="display:inline" class="d-inline-flex align-items-center gap-1">
+                            <input type="hidden" name="userId" value="@user.Id" />
+                            <input type="text" name="roleName" class="form-control form-control-sm" style="width:100px" placeholder="role" required />
+                            <button type="submit" class="btn btn-sm btn-outline-success">+Role</button>
+                        </form>
+                        <form method="post" asp-page-handler="RemoveRole" style="display:inline" class="d-inline-flex align-items-center gap-1">
+                            <input type="hidden" name="userId" value="@user.Id" />
+                            <input type="text" name="roleName" class="form-control form-control-sm" style="width:100px" placeholder="role" required />
+                            <button type="submit" class="btn btn-sm btn-outline-danger">-Role</button>
                         </form>
                     </td>
                 </tr>

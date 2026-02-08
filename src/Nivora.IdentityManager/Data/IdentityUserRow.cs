@@ -10,4 +10,8 @@ public class IdentityUserRow
     public DateTimeOffset? LockoutEnd { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset? LastLoginAt { get; set; }
+    public DateTimeOffset? EmailConfirmedAt { get; set; }
+    public string? PhoneNumber { get; set; }
+    public DateTimeOffset? PhoneConfirmedAt { get; set; }
+    public bool TwoFactorEnabled { get; set; }
 }

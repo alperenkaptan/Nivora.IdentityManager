@@ -1,0 +1,24 @@
+@page
+@model Nivora.IdentityManager.Pages.ConfirmEmailModel
+@{
+    ViewData["Title"] = "Confirm Email";
+}
+
+<h2>Confirm Email</h2>
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger">@Model.ErrorMessage</div>
+}
+@if (!string.IsNullOrEmpty(Model.StatusMessage))
+{
+    <div class="alert alert-success">@Model.StatusMessage</div>
+}
+
+<form method="post" class="col-md-4">
+    <div class="mb-3">
+        <label class="form-label">Confirmation Token</label>
+        <input type="text" name="token" class="form-control" value="@Model.Token" required />
+    </div>
+    <button type="submit" class="btn btn-primary">Confirm Email</button>
+</form>

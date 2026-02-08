@@ -9,17 +9,13 @@ namespace Nivora.IdentityManager.Pages.Admin;
 
 public class UsersModel : PageModel
 {
-    private readonly IdentityApiClient _api;
-    private readonly IConfiguration _config;
-    private readonly AppDbContext _db;
     private readonly IIdentityAdminService _admin;
+    private readonly AppDbContext _db;
 
-    public UsersModel(IdentityApiClient api, IConfiguration config, AppDbContext db, IIdentityAdminService admin)
+    public UsersModel(IIdentityAdminService admin, AppDbContext db)
     {
-        _api = api;
-        _config = config;
-        _db = db;
         _admin = admin;
+        _db = db;
     }
 
     public List<IdentityUserRow> Users { get; set; } = [];
@@ -30,9 +26,10 @@ public class UsersModel : PageModel
 
     private async Task<bool> IsAdminAsync()
     {
-        var me = await _api.GetMeWithRefreshAsync(HttpContext.Session);
-        var adminEmail = _config["AdminSeed:Email"];
-        return me.Success && string.Equals(me.Data?.Email, adminEmail, StringComparison.OrdinalIgnoreCase);
+        var userId = AuthSessionStore.GetUserId(HttpContext.Session);
+        if (userId is null) return false;
+        var roles = await _admin.GetUserRolesAsync(userId.Value);
+        return roles.Contains("Admin", StringComparer.OrdinalIgnoreCase);
     }
 
     public async Task<IActionResult> OnGetAsync()
@@ -46,7 +43,7 @@ public class UsersModel : PageModel
 
         Users = await _db.Set<IdentityUserRow>()
             .FromSqlRaw(
-                "SELECT Id, Email, NormalizedEmail, IsDisabled, AccessFailedCount, LockoutEnd, CreatedAt, LastLoginAt FROM Users ORDER BY CreatedAt DESC")
+                "SELECT Id, Email, NormalizedEmail, IsDisabled, AccessFailedCount, LockoutEnd, CreatedAt, LastLoginAt, EmailConfirmedAt, PhoneNumber, PhoneConfirmedAt, TwoFactorEnabled FROM Users ORDER BY CreatedAt DESC")
             .ToListAsync();
 
         return Page();
@@ -77,6 +74,33 @@ public class UsersModel : PageModel
 
         await _admin.RevokeAllSessionsAsync(userId, "admin panel");
         StatusMessage = "All sessions revoked.";
+        return RedirectToPage();
+    }
+
+    public async Task<IActionResult> OnPostSetPasswordAsync(Guid userId, string newPassword)
+    {
+        if (!await IsAdminAsync()) return Forbid();
+
+        await _admin.SetPasswordAsync(userId, newPassword, "admin panel");
+        StatusMessage = "Password updated.";
+        return RedirectToPage();
+    }
+
+    public async Task<IActionResult> OnPostAssignRoleAsync(Guid userId, string roleName)
+    {
+        if (!await IsAdminAsync()) return Forbid();
+
+        await _admin.AssignRoleAsync(userId, roleName);
+        StatusMessage = $"Role '{roleName}' assigned.";
+        return RedirectToPage();
+    }
+
+    public async Task<IActionResult> OnPostRemoveRoleAsync(Guid userId, string roleName)
+    {
+        if (!await IsAdminAsync()) return Forbid();
+
+        await _admin.RemoveRoleAsync(userId, roleName);
+        StatusMessage = $"Role '{roleName}' removed.";
         return RedirectToPage();
     }
 }

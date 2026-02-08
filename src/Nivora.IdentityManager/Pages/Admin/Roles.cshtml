@@ -1,0 +1,55 @@
+@page
+@model Nivora.IdentityManager.Pages.Admin.RolesModel
+@{
+    ViewData["Title"] = "Manage Roles";
+}
+
+<h2>Roles</h2>
+
+@if (Model.IsForbidden)
+{
+    <div class="alert alert-danger">Forbidden — admin access only.</div>
+}
+else
+{
+    @if (!string.IsNullOrEmpty(Model.StatusMessage))
+    {
+        <div class="alert alert-info">@Model.StatusMessage</div>
+    }
+
+    <h4>Create Role</h4>
+    <form method="post" asp-page-handler="Create" class="col-md-4 mb-4">
+        <div class="mb-2">
+            <input type="text" name="roleName" class="form-control" placeholder="Role name" required />
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">Create</button>
+    </form>
+
+    <h4>Existing Roles</h4>
+    @if (Model.Roles.Count == 0)
+    {
+        <p>No roles defined.</p>
+    }
+    else
+    {
+        <table class="table table-striped col-md-6">
+            <thead>
+                <tr><th>Role</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var role in Model.Roles)
+                {
+                    <tr>
+                        <td>@role</td>
+                        <td>
+                            <form method="post" asp-page-handler="Delete" style="display:inline">
+                                <input type="hidden" name="roleName" value="@role" />
+                                <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+}

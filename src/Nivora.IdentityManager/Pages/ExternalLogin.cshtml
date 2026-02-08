@@ -1,0 +1,29 @@
+@page
+@model Nivora.IdentityManager.Pages.ExternalLoginModel
+@{
+    ViewData["Title"] = "External Login";
+}
+
+<h2>External Login (Simulated)</h2>
+<p class="text-muted">In production the host validates the provider token. This page simulates the verified data.</p>
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger">@Model.ErrorMessage</div>
+}
+
+<form method="post" class="col-md-4">
+    <div class="mb-3">
+        <label class="form-label">Provider</label>
+        <input type="text" name="provider" class="form-control" placeholder="Google" required />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Provider User ID</label>
+        <input type="text" name="providerUserId" class="form-control" required />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Email (optional)</label>
+        <input type="email" name="email" class="form-control" />
+    </div>
+    <button type="submit" class="btn btn-primary">Login via External Provider</button>
+</form>

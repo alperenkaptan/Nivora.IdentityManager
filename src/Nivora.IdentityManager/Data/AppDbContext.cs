@@ -13,6 +13,13 @@ public class AppDbContext : DbContext
         {
             o.UsersTableName = "Users";
             o.RefreshTokensTableName = "Tokens";
+            o.PasswordResetTokensTableName = "PasswordResetTokens";
+            o.EmailConfirmationTokensTableName = "EmailConfirmationTokens";
+            o.RolesTableName = "Roles";
+            o.UserRolesTableName = "UserRoles";
+            o.ExternalLoginsTableName = "ExternalLogins";
+            o.PhoneVerificationTokensTableName = "PhoneVerificationTokens";
+            o.TwoFactorChallengesTableName = "TwoFactorChallenges";
         });
         modelBuilder.Entity<IdentityUserRow>().HasNoKey().ToView(null);
     }

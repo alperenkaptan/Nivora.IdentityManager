@@ -1,19 +1,18 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Nivora.IdentityManager.Data;
+using Nivora.Identity.Abstractions;
+using Nivora.Identity.Contracts.Dtos;
 using Nivora.IdentityManager.Helpers;
 
 namespace Nivora.IdentityManager.Pages;
 
 public class LoginModel : PageModel
 {
-    private readonly IdentityApiClient _api;
-    private readonly AppDbContext _db;
+    private readonly INivoraIdentityFacade _facade;
 
-    public LoginModel(IdentityApiClient api, AppDbContext db)
+    public LoginModel(INivoraIdentityFacade facade)
     {
-        _api = api;
-        _db = db;
+        _facade = facade;
     }
 
     [TempData]
@@ -23,14 +22,31 @@ public class LoginModel : PageModel
 
     public async Task<IActionResult> OnPostAsync(string email, string password)
     {
-        var result = await _api.LoginAsync(email, password);
-        if (!result.Success)
+        try
         {
-            ErrorMessage = await AuthErrorHelper.EnrichErrorAsync(_db, email, result.Error!);
+            var ctx = IdentityCallContext.FromHttp(HttpContext);
+            var result = await _facade.LoginAsync(new LoginRequest(email, password), ctx);
+
+            if (result is LoginSuccess success)
+            {
+                AuthSessionStore.SetTokens(HttpContext.Session,
+                    success.Tokens.AccessToken, success.Tokens.RefreshToken);
+                return RedirectToPage("/Profile");
+            }
+
+            if (result is LoginTwoFactorRequired twoFactor)
+            {
+                AuthSessionStore.SetChallengeToken(HttpContext.Session, twoFactor.ChallengeToken);
+                return RedirectToPage("/Login2fa");
+            }
+
+            ErrorMessage = "Unexpected login result.";
             return RedirectToPage();
         }
-
-        AuthSessionStore.SetTokens(HttpContext.Session, result.Data!.AccessToken, result.Data.RefreshToken);
-        return RedirectToPage("/Profile");
+        catch (IdentityOperationException ex)
+        {
+            ErrorMessage = ex.Detail;
+            return RedirectToPage();
+        }
     }
 }

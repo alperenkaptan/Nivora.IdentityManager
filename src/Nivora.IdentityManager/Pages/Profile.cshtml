@@ -10,6 +10,10 @@
 {
     <div class="alert alert-danger">@Model.ErrorMessage</div>
 }
+@if (!string.IsNullOrEmpty(Model.StatusMessage))
+{
+    <div class="alert alert-success">@Model.StatusMessage</div>
+}
 
 @if (Model.Me is not null)
 {
@@ -18,10 +22,115 @@
         <tr><th>Email</th><td>@Model.Me.Email</td></tr>
         <tr><th>Created At</th><td>@Model.Me.CreatedAt</td></tr>
         <tr><th>Last Login At</th><td>@Model.Me.LastLoginAt</td></tr>
+        <tr><th>Email Confirmed</th><td>@(Model.Me.EmailConfirmedAt?.ToString() ?? "Not confirmed")</td></tr>
+        <tr><th>Phone</th><td>@(Model.Me.PhoneNumber ?? "Not set")</td></tr>
+        <tr><th>Phone Confirmed</th><td>@(Model.Me.PhoneConfirmedAt?.ToString() ?? "Not confirmed")</td></tr>
     </table>
 
-    <form method="post" asp-page-handler="Logout">
+    <form method="post" asp-page-handler="Logout" class="mb-4">
         <button type="submit" class="btn btn-outline-danger">Logout</button>
+    </form>
+
+    <hr />
+
+    @* ?? Change Password ?? *@
+    <h4>Change Password</h4>
+    <form method="post" asp-page-handler="ChangePassword" class="col-md-4 mb-4">
+        <div class="mb-2">
+            <label class="form-label">Current Password</label>
+            <input type="password" name="currentPassword" class="form-control" required />
+        </div>
+        <div class="mb-2">
+            <label class="form-label">New Password</label>
+            <input type="password" name="newPassword" class="form-control" required />
+        </div>
+        <button type="submit" class="btn btn-warning btn-sm">Change Password</button>
+    </form>
+
+    <hr />
+
+    @* ?? Email Confirmation ?? *@
+    <h4>Email Confirmation</h4>
+    <form method="post" asp-page-handler="RequestEmailConfirmation" class="mb-4">
+        <button type="submit" class="btn btn-info btn-sm">Request Email Confirmation</button>
+    </form>
+
+    <hr />
+
+    @* ?? Phone Management ?? *@
+    <h4>Phone</h4>
+    <form method="post" asp-page-handler="SetPhone" class="col-md-4 mb-2">
+        <div class="mb-2">
+            <label class="form-label">Phone Number</label>
+            <input type="text" name="phoneNumber" class="form-control" placeholder="+15551234567" required />
+        </div>
+        <button type="submit" class="btn btn-secondary btn-sm">Set Phone</button>
+    </form>
+    <form method="post" asp-page-handler="RequestPhoneVerification" class="col-md-4 mb-2">
+        <div class="mb-2">
+            <label class="form-label">Phone Number (for verification)</label>
+            <input type="text" name="phoneNumber" class="form-control" placeholder="+15551234567" required />
+        </div>
+        <button type="submit" class="btn btn-secondary btn-sm">Request Phone Verification</button>
+    </form>
+    <form method="post" asp-page-handler="ConfirmPhone" class="col-md-4 mb-4">
+        <div class="mb-2">
+            <label class="form-label">Verification Code</label>
+            <input type="text" name="code" class="form-control" required />
+        </div>
+        <button type="submit" class="btn btn-success btn-sm">Confirm Phone</button>
+    </form>
+
+    <hr />
+
+    @* ?? 2FA TOTP ?? *@
+    <h4>Two-Factor Authentication (TOTP)</h4>
+    @if (!string.IsNullOrEmpty(Model.TotpSecret))
+    {
+        <div class="alert alert-info">
+            <strong>TOTP Secret:</strong> <code>@Model.TotpSecret</code><br />
+            <strong>OTP Auth URI:</strong> <code style="word-break:break-all;">@Model.TotpUri</code>
+        </div>
+    }
+    <form method="post" asp-page-handler="TotpSetup" class="mb-2">
+        <button type="submit" class="btn btn-outline-primary btn-sm">Generate TOTP Secret</button>
+    </form>
+    <form method="post" asp-page-handler="TotpEnable" class="col-md-4 mb-2">
+        <div class="mb-2">
+            <label class="form-label">TOTP Code (to enable)</label>
+            <input type="text" name="code" class="form-control" required />
+        </div>
+        <button type="submit" class="btn btn-success btn-sm">Enable 2FA</button>
+    </form>
+    <form method="post" asp-page-handler="TotpDisable" class="col-md-4 mb-4">
+        <div class="mb-2">
+            <label class="form-label">TOTP Code (to disable)</label>
+            <input type="text" name="code" class="form-control" required />
+        </div>
+        <button type="submit" class="btn btn-danger btn-sm">Disable 2FA</button>
+    </form>
+
+    <hr />
+
+    @* ?? External Login ?? *@
+    <h4>External Login</h4>
+    <form method="post" asp-page-handler="LinkExternal" class="col-md-4 mb-2">
+        <div class="mb-2">
+            <label class="form-label">Provider</label>
+            <input type="text" name="provider" class="form-control" placeholder="Google" required />
+        </div>
+        <div class="mb-2">
+            <label class="form-label">Provider User ID</label>
+            <input type="text" name="providerUserId" class="form-control" required />
+        </div>
+        <button type="submit" class="btn btn-outline-secondary btn-sm">Link External Login</button>
+    </form>
+    <form method="post" asp-page-handler="UnlinkExternal" class="col-md-4 mb-4">
+        <div class="mb-2">
+            <label class="form-label">Provider (to unlink)</label>
+            <input type="text" name="provider" class="form-control" placeholder="Google" required />
+        </div>
+        <button type="submit" class="btn btn-outline-danger btn-sm">Unlink External Login</button>
     </form>
 }
 else

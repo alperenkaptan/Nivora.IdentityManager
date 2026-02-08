@@ -6,11 +6,11 @@ using Nivora.IdentityManager.Helpers;
 
 namespace Nivora.IdentityManager.Pages;
 
-public class RegisterModel : PageModel
+public class ExternalLoginModel : PageModel
 {
     private readonly INivoraIdentityFacade _facade;
 
-    public RegisterModel(INivoraIdentityFacade facade)
+    public ExternalLoginModel(INivoraIdentityFacade facade)
     {
         _facade = facade;
     }
@@ -20,12 +20,13 @@ public class RegisterModel : PageModel
 
     public void OnGet() { }
 
-    public async Task<IActionResult> OnPostAsync(string email, string password)
+    public async Task<IActionResult> OnPostAsync(string provider, string providerUserId, string? email)
     {
         try
         {
             var ctx = IdentityCallContext.FromHttp(HttpContext);
-            var response = await _facade.RegisterAsync(new RegisterRequest(email, password), ctx);
+            var response = await _facade.ExternalLoginAsync(
+                new ExternalLoginRequest(provider, providerUserId, email), ctx);
             AuthSessionStore.SetTokens(HttpContext.Session, response.AccessToken, response.RefreshToken);
             return RedirectToPage("/Profile");
         }
