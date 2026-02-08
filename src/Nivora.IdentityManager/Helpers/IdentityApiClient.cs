@@ -122,7 +122,7 @@ public static class AuthErrorHelper
         var user = await db.Set<IdentityUserRow>()
             .FromSqlRaw(
                 "SELECT Id, Email, NormalizedEmail, IsDisabled, AccessFailedCount, LockoutEnd, CreatedAt, LastLoginAt " +
-                "FROM nivora_identity_users WHERE NormalizedEmail = {0}", normalizedEmail)
+                "FROM Users WHERE NormalizedEmail = {0}", normalizedEmail)
             .FirstOrDefaultAsync();
 
         if (user is null)

@@ -12,24 +12,7 @@ namespace Nivora.IdentityManager.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "IdentityUserRow",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    NormalizedEmail = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    IsDisabled = table.Column<bool>(type: "bit", nullable: false),
-                    AccessFailedCount = table.Column<int>(type: "int", nullable: false),
-                    LockoutEnd = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    LastLoginAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true)
-                },
-                constraints: table =>
-                {
-                });
-
-            migrationBuilder.CreateTable(
-                name: "nivora_identity_users",
+                name: "Users",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -44,11 +27,11 @@ namespace Nivora.IdentityManager.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_nivora_identity_users", x => x.Id);
+                    table.PrimaryKey("PK_Users", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
-                name: "nivora_identity_refresh_tokens",
+                name: "Tokens",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -61,28 +44,28 @@ namespace Nivora.IdentityManager.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_nivora_identity_refresh_tokens", x => x.Id);
+                    table.PrimaryKey("PK_Tokens", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_nivora_identity_refresh_tokens_nivora_identity_users_UserId",
+                        name: "FK_Tokens_Users_UserId",
                         column: x => x.UserId,
-                        principalTable: "nivora_identity_users",
+                        principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_nivora_identity_refresh_tokens_TokenHash",
-                table: "nivora_identity_refresh_tokens",
+                name: "IX_Tokens_TokenHash",
+                table: "Tokens",
                 column: "TokenHash");
 
             migrationBuilder.CreateIndex(
-                name: "IX_nivora_identity_refresh_tokens_UserId",
-                table: "nivora_identity_refresh_tokens",
+                name: "IX_Tokens_UserId",
+                table: "Tokens",
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_nivora_identity_users_NormalizedEmail",
-                table: "nivora_identity_users",
+                name: "IX_Users_NormalizedEmail",
+                table: "Users",
                 column: "NormalizedEmail",
                 unique: true);
         }
@@ -91,13 +74,10 @@ namespace Nivora.IdentityManager.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "IdentityUserRow");
+                name: "Tokens");
 
             migrationBuilder.DropTable(
-                name: "nivora_identity_refresh_tokens");
-
-            migrationBuilder.DropTable(
-                name: "nivora_identity_users");
+                name: "Users");
         }
     }
 }

@@ -46,7 +46,7 @@ public class UsersModel : PageModel
 
         Users = await _db.Set<IdentityUserRow>()
             .FromSqlRaw(
-                "SELECT Id, Email, NormalizedEmail, IsDisabled, AccessFailedCount, LockoutEnd, CreatedAt, LastLoginAt FROM nivora_identity_users ORDER BY CreatedAt DESC")
+                "SELECT Id, Email, NormalizedEmail, IsDisabled, AccessFailedCount, LockoutEnd, CreatedAt, LastLoginAt FROM Users ORDER BY CreatedAt DESC")
             .ToListAsync();
 
         return Page();
@@ -66,7 +66,7 @@ public class UsersModel : PageModel
         if (!await IsAdminAsync()) return Forbid();
 
         await _db.Database.ExecuteSqlRawAsync(
-            "UPDATE nivora_identity_users SET IsDisabled = 0 WHERE Id = {0}", userId);
+            "UPDATE Users SET IsDisabled = 0 WHERE Id = {0}", userId);
         StatusMessage = "User enabled.";
         return RedirectToPage();
     }

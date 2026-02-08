@@ -12,7 +12,7 @@ using Nivora.IdentityManager.Data;
 namespace Nivora.IdentityManager.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260208114933_Init")]
+    [Migration("20260208123135_Init")]
     partial class Init
     {
         /// <inheritdoc />
@@ -65,7 +65,7 @@ namespace Nivora.IdentityManager.Migrations
                     b.HasIndex("NormalizedEmail")
                         .IsUnique();
 
-                    b.ToTable("nivora_identity_users", (string)null);
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("Nivora.Identity.Domain.RefreshToken", b =>
@@ -101,7 +101,7 @@ namespace Nivora.IdentityManager.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("nivora_identity_refresh_tokens", (string)null);
+                    b.ToTable("Tokens", (string)null);
                 });
 
             modelBuilder.Entity("Nivora.IdentityManager.Data.IdentityUserRow", b =>
@@ -132,7 +132,9 @@ namespace Nivora.IdentityManager.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.ToTable("IdentityUserRow");
+                    b.ToTable((string)null);
+
+                    b.ToView(null, (string)null);
                 });
 
             modelBuilder.Entity("Nivora.Identity.Domain.RefreshToken", b =>

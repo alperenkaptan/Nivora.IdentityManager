@@ -9,7 +9,11 @@ public class AppDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.AddNivoraIdentitySchema();
+        modelBuilder.AddNivoraIdentitySchema(o =>
+        {
+            o.UsersTableName = "Users";
+            o.RefreshTokensTableName = "Tokens";
+        });
         modelBuilder.Entity<IdentityUserRow>().HasNoKey().ToView(null);
     }
 }
