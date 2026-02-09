@@ -25,6 +25,14 @@ public class RoleClaimsTransformation : IClaimsTransformation
         if (sub is null || !Guid.TryParse(sub, out var userId))
             return principal;
 
+        // Strip stale role claims from every identity to prevent duplicates
+        foreach (var id in principal.Identities)
+        {
+            var stale = id.FindAll(ClaimTypes.Role).ToList();
+            foreach (var c in stale)
+                id.RemoveClaim(c);
+        }
+
         var cacheKey = $"user-roles-{userId}";
         if (!_cache.TryGetValue(cacheKey, out List<string>? roles))
         {
@@ -32,11 +40,11 @@ public class RoleClaimsTransformation : IClaimsTransformation
             _cache.Set(cacheKey, roles, TimeSpan.FromMinutes(2));
         }
 
-        var identity = new ClaimsIdentity();
+        var roleIdentity = new ClaimsIdentity();
         foreach (var role in roles!)
-            identity.AddClaim(new Claim(ClaimTypes.Role, role));
+            roleIdentity.AddClaim(new Claim(ClaimTypes.Role, role));
 
-        principal.AddIdentity(identity);
+        principal.AddIdentity(roleIdentity);
         return principal;
     }
 }

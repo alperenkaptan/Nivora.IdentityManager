@@ -10,10 +10,12 @@ namespace Nivora.IdentityManager.Pages;
 public class Login2faModel : PageModel
 {
     private readonly INivoraIdentityFacade _facade;
+    private readonly IIdentityAdminService _admin;
 
-    public Login2faModel(INivoraIdentityFacade facade)
+    public Login2faModel(INivoraIdentityFacade facade, IIdentityAdminService admin)
     {
         _facade = facade;
+        _admin = admin;
     }
 
     [TempData]
@@ -37,8 +39,12 @@ public class Login2faModel : PageModel
         {
             var ctx = IdentityCallContext.FromHttp(HttpContext);
             var response = await _facade.Complete2FaLoginAsync(new Login2FaRequest(challenge, code), ctx);
+
+            var email = AuthSessionStore.GetLoginEmail(HttpContext.Session);
             AuthSessionStore.ClearChallenge(HttpContext.Session);
-            await CookieSignInHelper.SignInFromJwtAsync(HttpContext, response.AccessToken);
+
+            var user = await _admin.FindByEmailAsync(email!);
+            await CookieSignInHelper.SignInAsync(HttpContext, user!.Id, email!);
             AuthSessionStore.SetRefreshToken(HttpContext.Session, response.RefreshToken);
             return RedirectToPage("/Profile");
         }

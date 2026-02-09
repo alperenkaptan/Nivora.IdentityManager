@@ -10,10 +10,12 @@ namespace Nivora.IdentityManager.Pages;
 public class RegisterModel : PageModel
 {
     private readonly INivoraIdentityFacade _facade;
+    private readonly IIdentityAdminService _admin;
 
-    public RegisterModel(INivoraIdentityFacade facade)
+    public RegisterModel(INivoraIdentityFacade facade, IIdentityAdminService admin)
     {
         _facade = facade;
+        _admin = admin;
     }
 
     [TempData]
@@ -27,7 +29,8 @@ public class RegisterModel : PageModel
         {
             var ctx = IdentityCallContext.FromHttp(HttpContext);
             var response = await _facade.RegisterAsync(new RegisterRequest(email, password), ctx);
-            await CookieSignInHelper.SignInFromJwtAsync(HttpContext, response.AccessToken);
+            var user = await _admin.FindByEmailAsync(email);
+            await CookieSignInHelper.SignInAsync(HttpContext, user!.Id, email);
             AuthSessionStore.SetRefreshToken(HttpContext.Session, response.RefreshToken);
             return RedirectToPage("/Profile");
         }
