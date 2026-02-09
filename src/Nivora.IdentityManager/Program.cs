@@ -15,7 +15,7 @@ builder.Services.AddDbContext<AppDbContext>(o =>
 builder.Services.AddNivoraIdentity<AppDbContext>(
     builder.Configuration.GetSection("NivoraIdentity"));
 
-// Cookie Authentication (overrides JWT Bearer as default scheme)
+// Cookie Authentication with security options
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(o =>
     {
@@ -23,6 +23,12 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         o.AccessDeniedPath = "/Login";
         o.ExpireTimeSpan = TimeSpan.FromHours(8);
         o.SlidingExpiration = true;
+
+        // SECURITY: HttpOnly, Secure, SameSite
+        o.Cookie.HttpOnly = true;
+        o.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        o.Cookie.SameSite = SameSiteMode.Strict;
+        o.Cookie.Name = "Nivora.Auth";
     });
 
 // Ensure cookie scheme wins even if AddNivoraIdentity set JWT as default
@@ -41,7 +47,15 @@ builder.Services.AddTransient<IClaimsTransformation, RoleClaimsTransformation>()
 // Razor Pages + Session (session kept for 2FA challenge flow)
 builder.Services.AddRazorPages();
 builder.Services.AddDistributedMemoryCache();
-builder.Services.AddSession();
+// SECURITY: Session configuration with timeout matching cookie expiry
+builder.Services.AddSession(o =>
+{
+    o.IdleTimeout = TimeSpan.FromHours(8);  // Match cookie expiry
+    o.Cookie.HttpOnly = true;
+    o.Cookie.Name = "Nivora.Session";
+    o.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    o.Cookie.SameSite = SameSiteMode.Strict;
+});
 
 var app = builder.Build();
 

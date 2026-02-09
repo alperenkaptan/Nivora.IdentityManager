@@ -1,14 +1,16 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Nivora.Identity.Abstractions;
 using Nivora.Identity.Contracts.Dtos;
 using Nivora.IdentityManager.Helpers;
+using System.Security.Claims;
 
 namespace Nivora.IdentityManager.Pages;
 
+[Authorize]
 public class ProfileModel : PageModel
 {
     private readonly INivoraIdentityFacade _facade;

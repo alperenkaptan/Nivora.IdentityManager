@@ -1,5 +1,5 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -11,6 +11,8 @@ using Nivora.Identity.Contracts.Dtos;
 using Nivora.IdentityManager.Auth;
 using Nivora.IdentityManager.Data;
 using Nivora.IdentityManager.Helpers;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace Nivora.IdentityManager.Pages;
 
@@ -62,12 +64,25 @@ public class ExternalLoginModel : PageModel
             // Log if caller provided email different from token (potential config mismatch)
             if (!string.IsNullOrWhiteSpace(email) && !string.Equals(email, tokenEmail, StringComparison.OrdinalIgnoreCase))
             {
-                _logger.LogWarning(
-                    "External login email mismatch: caller provided '{ProvidedEmail}' but token contains '{TokenEmail}'. Using token value.",
-                    email, tokenEmail);
+                _logger?.LogWarning("External login email mismatch detected. Using token email value. User ID: {UserId}", userId);
             }
 
             await CookieSignInHelper.SignInAsync(HttpContext, userId, resolvedEmail);
+
+            // SECURITY FIX: Check if user is disabled
+            var user = await _db.Set<IdentityUserRow>()
+                .FromSqlRaw(
+                    "SELECT Id, Email, NormalizedEmail, IsDisabled, AccessFailedCount, LockoutEnd, CreatedAt, LastLoginAt, EmailConfirmedAt, PhoneNumber, PhoneConfirmedAt, TwoFactorEnabled FROM Users WHERE Id = {0}",
+                    userId)
+                .FirstOrDefaultAsync();
+
+            if (user?.IsDisabled == true)
+            {
+                ErrorMessage = "This account has been disabled.";
+                await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                return RedirectToPage("/Login");
+            }
+
             AuthSessionStore.SetRefreshToken(HttpContext.Session, response.RefreshToken);
             return RedirectToPage("/Profile");
         }

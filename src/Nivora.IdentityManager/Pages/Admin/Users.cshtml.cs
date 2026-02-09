@@ -14,12 +14,14 @@ public class UsersModel : PageModel
     private readonly IIdentityAdminService _admin;
     private readonly AppDbContext _db;
     private readonly IMemoryCache _cache;
+    private readonly ILogger<UsersModel> _logger;
 
-    public UsersModel(IIdentityAdminService admin, AppDbContext db, IMemoryCache cache)
+    public UsersModel(IIdentityAdminService admin, AppDbContext db, IMemoryCache cache, ILogger<UsersModel> logger)
     {
         _admin = admin;
         _db = db;
         _cache = cache;
+        _logger = logger;
     }
 
     public List<IdentityUserRow> Users { get; set; } = [];
@@ -79,19 +81,55 @@ public class UsersModel : PageModel
 
     public async Task<IActionResult> OnPostAssignRoleAsync(Guid userId, string roleName)
     {
-        await _admin.AssignRoleAsync(userId, roleName);
-        _cache.Remove($"user-roles-{userId}");
-        await _admin.RevokeAllSessionsAsync(userId, $"role '{roleName}' assigned");
-        StatusMessage = $"Role '{roleName}' assigned and user sessions revoked (must re-login for role to take effect).";
-        return RedirectToPage();
+        try
+        {
+            await _admin.AssignRoleAsync(userId, roleName);
+            _cache.Remove($"user-roles-{userId}");
+
+            try
+            {
+                await _admin.RevokeAllSessionsAsync(userId, $"role '{roleName}' assigned");
+            }
+            catch (Exception ex)
+            {
+                // SECURITY: Log but continue - role was assigned successfully
+                _logger?.LogError(ex, "Failed to revoke sessions for user {UserId}", userId);
+            }
+
+            StatusMessage = $"Role '{roleName}' assigned and user sessions revoked (must re-login for role to take effect).";
+            return RedirectToPage();
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = "Error assigning role. Please try again.";
+            return RedirectToPage();
+        }
     }
 
     public async Task<IActionResult> OnPostRemoveRoleAsync(Guid userId, string roleName)
     {
-        await _admin.RemoveRoleAsync(userId, roleName);
-        _cache.Remove($"user-roles-{userId}");
-        await _admin.RevokeAllSessionsAsync(userId, $"role '{roleName}' removed");
-        StatusMessage = $"Role '{roleName}' removed and user sessions revoked (must re-login).";
-        return RedirectToPage();
+        try
+        {
+            await _admin.RemoveRoleAsync(userId, roleName);
+            _cache.Remove($"user-roles-{userId}");
+
+            try
+            {
+                await _admin.RevokeAllSessionsAsync(userId, $"role '{roleName}' removed");
+            }
+            catch (Exception ex)
+            {
+                // SECURITY: Log but continue - role was removed successfully
+                _logger?.LogError(ex, "Failed to revoke sessions for user {UserId}", userId);
+            }
+
+            StatusMessage = $"Role '{roleName}' removed and user sessions revoked (must re-login).";
+            return RedirectToPage();
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = "Error removing role. Please try again.";
+            return RedirectToPage();
+        }
     }
 }
