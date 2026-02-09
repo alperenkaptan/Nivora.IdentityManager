@@ -25,6 +25,13 @@ public class LoginModel : PageModel
 
     public async Task<IActionResult> OnPostAsync(string email, string password)
     {
+        // Input validation
+        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+        {
+            ErrorMessage = "Email and password are required.";
+            return RedirectToPage();
+        }
+
         try
         {
             var ctx = IdentityCallContext.FromHttp(HttpContext);
@@ -33,7 +40,13 @@ public class LoginModel : PageModel
             if (result is LoginSuccess success)
             {
                 var user = await _admin.FindByEmailAsync(email);
-                await CookieSignInHelper.SignInAsync(HttpContext, user!.Id, email);
+                if (user is null)
+                {
+                    ErrorMessage = "Invalid credentials. Please try again.";
+                    return RedirectToPage();
+                }
+
+                await CookieSignInHelper.SignInAsync(HttpContext, user.Id, email);
                 AuthSessionStore.SetRefreshToken(HttpContext.Session, success.Tokens.RefreshToken);
                 return RedirectToPage("/Profile");
             }
@@ -45,12 +58,18 @@ public class LoginModel : PageModel
                 return RedirectToPage("/Login2fa");
             }
 
-            ErrorMessage = "Unexpected login result.";
+            ErrorMessage = "Invalid credentials. Please try again.";
             return RedirectToPage();
         }
-        catch (IdentityOperationException ex)
+        catch (IdentityOperationException)
         {
-            ErrorMessage = ex.Detail;
+            // Don't expose internal details
+            ErrorMessage = "Invalid credentials. Please try again.";
+            return RedirectToPage();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "An error occurred during login. Please try again.";
             return RedirectToPage();
         }
     }
