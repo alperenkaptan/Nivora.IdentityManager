@@ -1,3 +1,6 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Nivora.Identity.Abstractions;
@@ -26,7 +29,14 @@ public class ProfileModel : PageModel
     [TempData]
     public string? TotpUri { get; set; }
 
-    private Guid? CurrentUserId => AuthSessionStore.GetUserId(HttpContext.Session);
+    private Guid? CurrentUserId
+    {
+        get
+        {
+            var sub = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            return sub is not null && Guid.TryParse(sub, out var id) ? id : null;
+        }
+    }
 
     public async Task<IActionResult> OnGetAsync()
     {
@@ -58,6 +68,7 @@ public class ProfileModel : PageModel
             catch { /* best-effort */ }
         }
         AuthSessionStore.Clear(HttpContext.Session);
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
         return RedirectToPage("/Login");
     }
 
@@ -74,6 +85,7 @@ public class ProfileModel : PageModel
                 IdentityCallContext.FromHttp(HttpContext));
             StatusMessage = "Password changed successfully. Please log in again.";
             AuthSessionStore.Clear(HttpContext.Session);
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return RedirectToPage("/Login");
         }
         catch (IdentityOperationException ex)

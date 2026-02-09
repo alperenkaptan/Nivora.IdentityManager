@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Nivora.Identity.Abstractions;
 using Nivora.Identity.Contracts.Dtos;
+using Nivora.IdentityManager.Auth;
 using Nivora.IdentityManager.Helpers;
 
 namespace Nivora.IdentityManager.Pages;
@@ -27,7 +28,8 @@ public class ExternalLoginModel : PageModel
             var ctx = IdentityCallContext.FromHttp(HttpContext);
             var response = await _facade.ExternalLoginAsync(
                 new ExternalLoginRequest(provider, providerUserId, email), ctx);
-            AuthSessionStore.SetTokens(HttpContext.Session, response.AccessToken, response.RefreshToken);
+            await CookieSignInHelper.SignInFromJwtAsync(HttpContext, response.AccessToken);
+            AuthSessionStore.SetRefreshToken(HttpContext.Session, response.RefreshToken);
             return RedirectToPage("/Profile");
         }
         catch (IdentityOperationException ex)

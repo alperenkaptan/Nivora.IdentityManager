@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Nivora.Identity.Abstractions;
 using Nivora.Identity.Contracts.Dtos;
+using Nivora.IdentityManager.Auth;
 using Nivora.IdentityManager.Helpers;
 
 namespace Nivora.IdentityManager.Pages;
@@ -37,7 +38,8 @@ public class Login2faModel : PageModel
             var ctx = IdentityCallContext.FromHttp(HttpContext);
             var response = await _facade.Complete2FaLoginAsync(new Login2FaRequest(challenge, code), ctx);
             AuthSessionStore.ClearChallenge(HttpContext.Session);
-            AuthSessionStore.SetTokens(HttpContext.Session, response.AccessToken, response.RefreshToken);
+            await CookieSignInHelper.SignInFromJwtAsync(HttpContext, response.AccessToken);
+            AuthSessionStore.SetRefreshToken(HttpContext.Session, response.RefreshToken);
             return RedirectToPage("/Profile");
         }
         catch (IdentityOperationException ex)

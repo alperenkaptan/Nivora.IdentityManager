@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Nivora.Identity.Abstractions;
 using Nivora.Identity.Contracts.Dtos;
+using Nivora.IdentityManager.Auth;
 using Nivora.IdentityManager.Helpers;
 
 namespace Nivora.IdentityManager.Pages;
@@ -29,8 +30,8 @@ public class LoginModel : PageModel
 
             if (result is LoginSuccess success)
             {
-                AuthSessionStore.SetTokens(HttpContext.Session,
-                    success.Tokens.AccessToken, success.Tokens.RefreshToken);
+                await CookieSignInHelper.SignInFromJwtAsync(HttpContext, success.Tokens.AccessToken);
+                AuthSessionStore.SetRefreshToken(HttpContext.Session, success.Tokens.RefreshToken);
                 return RedirectToPage("/Profile");
             }
 

@@ -1,8 +1,9 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using Nivora.Identity.Abstractions;
+using Nivora.IdentityManager.Auth;
 using Nivora.IdentityManager.Data;
-using Nivora.IdentityManager.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,18 +11,34 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<AppDbContext>(o =>
     o.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
-// Set JWT Bearer as default authentication scheme for [Authorize] attributes
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-});
-
 // Nivora Identity (facade + admin service registered automatically)
-// This registers JWT Bearer authentication
 builder.Services.AddNivoraIdentity<AppDbContext>(
     builder.Configuration.GetSection("NivoraIdentity"));
 
-// Razor Pages + Session
+// Cookie Authentication (overrides JWT Bearer as default scheme)
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(o =>
+    {
+        o.LoginPath = "/Login";
+        o.AccessDeniedPath = "/Login";
+        o.ExpireTimeSpan = TimeSpan.FromHours(8);
+        o.SlidingExpiration = true;
+    });
+
+// Ensure cookie scheme wins even if AddNivoraIdentity set JWT as default
+builder.Services.PostConfigure<AuthenticationOptions>(o =>
+{
+    o.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    o.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+});
+
+builder.Services.AddAuthorization();
+
+// Role claims transformation — refreshes roles from DB with short cache TTL
+builder.Services.AddMemoryCache();
+builder.Services.AddTransient<IClaimsTransformation, RoleClaimsTransformation>();
+
+// Razor Pages + Session (session kept for 2FA challenge flow)
 builder.Services.AddRazorPages();
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession();
@@ -40,10 +57,6 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseRouting();
 app.UseSession();
-
-// Add JWT from session to Authorization header
-// This must be BEFORE UseAuthentication()
-app.UseMiddleware<JwtFromSessionMiddleware>();
 
 app.UseAuthentication();
 app.UseAuthorization();

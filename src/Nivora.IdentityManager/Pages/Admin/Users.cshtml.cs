@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Nivora.Identity.Abstractions;
 using Nivora.IdentityManager.Data;
 
@@ -12,11 +13,13 @@ public class UsersModel : PageModel
 {
     private readonly IIdentityAdminService _admin;
     private readonly AppDbContext _db;
+    private readonly IMemoryCache _cache;
 
-    public UsersModel(IIdentityAdminService admin, AppDbContext db)
+    public UsersModel(IIdentityAdminService admin, AppDbContext db, IMemoryCache cache)
     {
         _admin = admin;
         _db = db;
+        _cache = cache;
     }
 
     public List<IdentityUserRow> Users { get; set; } = [];
@@ -77,8 +80,7 @@ public class UsersModel : PageModel
     public async Task<IActionResult> OnPostAssignRoleAsync(Guid userId, string roleName)
     {
         await _admin.AssignRoleAsync(userId, roleName);
-        // Role de?i?ti?inde user'?n tüm sessionlar?n? revoke et
-        // böylece yeni token almas? gerekir ve yeni role'ler reflection edilir
+        _cache.Remove($"user-roles-{userId}");
         await _admin.RevokeAllSessionsAsync(userId, $"role '{roleName}' assigned");
         StatusMessage = $"Role '{roleName}' assigned and user sessions revoked (must re-login for role to take effect).";
         return RedirectToPage();
@@ -87,8 +89,7 @@ public class UsersModel : PageModel
     public async Task<IActionResult> OnPostRemoveRoleAsync(Guid userId, string roleName)
     {
         await _admin.RemoveRoleAsync(userId, roleName);
-        // Role kald?r?ld???nda user'?n tüm sessionlar?n? revoke et
-        // böylece yeni token almas? gerekir ve role de?i?ikli?i reflect edilir
+        _cache.Remove($"user-roles-{userId}");
         await _admin.RevokeAllSessionsAsync(userId, $"role '{roleName}' removed");
         StatusMessage = $"Role '{roleName}' removed and user sessions revoked (must re-login).";
         return RedirectToPage();
